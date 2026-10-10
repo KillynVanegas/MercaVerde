@@ -1,5 +1,9 @@
 {
-  "plugins": [
-    "expo-status-bar"
-  ]
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "510a0338-ceaa-452d-b987-7f700d841807"
+      }
+    }
+  }
 }

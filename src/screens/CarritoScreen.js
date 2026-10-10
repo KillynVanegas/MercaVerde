@@ -11,29 +11,47 @@ import {
 } from "react-native";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
-import { confirmarPedido } from "../services/pedidoService";
+import { useConexion } from "../context/ConexionContext";
+import { useSync } from "../context/SyncContext";
+import { confirmarPedidoUsuario } from "../casosdeuso/confirmarPedido";
+import { formatearPrecio } from "../utils/formato";
 
 export default function CarritoScreen({ navigation }) {
   const { items, total, actualizarCantidad, quitarProducto, vaciarCarrito } = useCart();
   const { usuario } = useAuth();
+  const { enLinea } = useConexion();
+  const { sincronizar, refrescar } = useSync();
   const [confirmando, setConfirmando] = useState(false);
 
+  /**
+   * Confirma en Firestore si hay red. Si no hay, guarda el pedido en el
+   * dispositivo y lo deja pendiente por sincronizar.
+   */
   async function manejarConfirmar() {
-    if (items.length === 0) {
-      Alert.alert("Carrito vacío", "Agrega al menos un producto antes de confirmar.");
-      return;
-    }
     setConfirmando(true);
     try {
-      const resultado = await confirmarPedido({ usuarioId: usuario.uid, items });
+      const resultado = await confirmarPedidoUsuario({
+        usuarioId: usuario.uid,
+        items,
+        enLinea,
+      });
+
+      if (!resultado.ok) {
+        Alert.alert("No se pudo confirmar el pedido", resultado.mensaje);
+        return;
+      }
+
       vaciarCarrito();
+      if (resultado.pendiente && enLinea === true) {
+        await sincronizar();
+      }
+      await refrescar();
+
       Alert.alert(
-        "Pedido confirmado",
-        `Tu pedido #${resultado.id.slice(0, 6)} por $${resultado.total.toLocaleString(
-          "es-CO"
-        )} fue registrado.`
+        resultado.pendiente ? "Pedido pendiente" : "Pedido confirmado",
+        `${resultado.mensaje} Total ${formatearPrecio(resultado.pedido.total)}.`
       );
-      navigation.navigate("Catalogo");
+      navigation.navigate("MisPedidos");
     } catch (error) {
       Alert.alert("No se pudo confirmar el pedido", error.message);
     } finally {
@@ -43,6 +61,9 @@ export default function CarritoScreen({ navigation }) {
 
   return (
     <View style={styles.contenedor}>
+      <TouchableOpacity onPress={() => navigation.goBack()}>
+        <Text style={styles.volver}>Volver</Text>
+      </TouchableOpacity>
       <Text style={styles.titulo}>Tu pedido</Text>
 
       <FlatList
@@ -54,7 +75,7 @@ export default function CarritoScreen({ navigation }) {
             <View style={{ flex: 1 }}>
               <Text style={styles.nombre}>{item.nombre}</Text>
               <Text style={styles.precioUnidad}>
-                ${item.precio.toLocaleString("es-CO")} / {item.unidad}
+                {formatearPrecio(item.precio)} / {item.unidad}
               </Text>
             </View>
 
@@ -83,18 +104,16 @@ export default function CarritoScreen({ navigation }) {
 
       <View style={styles.resumen}>
         <Text style={styles.totalTexto}>Total</Text>
-        <Text style={styles.totalValor}>${total.toLocaleString("es-CO")}</Text>
+        <Text style={styles.totalValor}>{formatearPrecio(total)}</Text>
       </View>
 
-      <TouchableOpacity
-        style={styles.boton}
-        onPress={manejarConfirmar}
-        disabled={confirmando}
-      >
+      <TouchableOpacity style={styles.boton} onPress={manejarConfirmar} disabled={confirmando}>
         {confirmando ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.botonTexto}>Confirmar pedido</Text>
+          <Text style={styles.botonTexto}>
+            {enLinea === false ? "Guardar pedido sin conexión" : "Confirmar pedido"}
+          </Text>
         )}
       </TouchableOpacity>
     </View>
@@ -102,7 +121,8 @@ export default function CarritoScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  contenedor: { flex: 1, backgroundColor: "#F4F7F1", paddingTop: 50, paddingHorizontal: 16 },
+  contenedor: { flex: 1, backgroundColor: "#F4F7F1", paddingTop: 12, paddingHorizontal: 16 },
+  volver: { color: "#2E7D32", fontWeight: "600", marginBottom: 8 },
   titulo: { fontSize: 22, fontWeight: "700", color: "#2E5A2E", marginBottom: 12 },
   vacio: { textAlign: "center", marginTop: 40, color: "#7A867A" },
   fila: {

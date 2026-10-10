@@ -6,7 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { iniciarSesion } from "../services/authService";
@@ -15,18 +14,23 @@ export default function LoginScreen({ navigation }) {
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState("");
 
+  /**
+   * Valida los campos y traduce un fallo de Firebase a un mensaje visible
+   * en la misma pantalla. En el navegador un Alert suele no verse.
+   */
   async function manejarLogin() {
-    if (!correo || !contrasena) {
-      Alert.alert("Datos incompletos", "Ingresa tu correo y contraseña.");
+    if (!correo.trim() || !contrasena) {
+      setError("Ingresa tu correo y contraseña.");
       return;
     }
     setCargando(true);
+    setError("");
     try {
-      await iniciarSesion({ correo, contrasena });
-      // La navegación al catálogo ocurre automáticamente vía AuthContext
-    } catch (error) {
-      Alert.alert("No se pudo iniciar sesión", traducirError(error.code));
+      await iniciarSesion({ correo: correo.trim(), contrasena });
+    } catch (fallo) {
+      setError(traducirError(fallo.code));
     } finally {
       setCargando(false);
     }
@@ -43,15 +47,23 @@ export default function LoginScreen({ navigation }) {
         autoCapitalize="none"
         keyboardType="default"
         value={correo}
-        onChangeText={setCorreo}
+        onChangeText={(valor) => {
+          setCorreo(valor);
+          setError("");
+        }}
       />
       <TextInput
         style={styles.input}
         placeholder="Contraseña"
         secureTextEntry
         value={contrasena}
-        onChangeText={setContrasena}
+        onChangeText={(valor) => {
+          setContrasena(valor);
+          setError("");
+        }}
       />
+
+      {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <TouchableOpacity style={styles.boton} onPress={manejarLogin} disabled={cargando}>
         {cargando ? (
@@ -75,7 +87,8 @@ function traducirError(codigo) {
     case "auth/user-not-found":
     case "auth/wrong-password":
     case "auth/invalid-credential":
-      return "Correo o contraseña incorrectos.";
+    case "auth/invalid-login-credentials":
+      return "Credenciales incorrectas";
     default:
       return "Ocurrió un error. Intenta de nuevo.";
   }
@@ -101,5 +114,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   botonTexto: { color: "#fff", fontWeight: "600", fontSize: 16 },
+  error: {
+    backgroundColor: "#FFEBEE",
+    color: "#C62828",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 8,
+    fontWeight: "600",
+  },
   enlace: { textAlign: "center", marginTop: 18, color: "#2E7D32" },
 });

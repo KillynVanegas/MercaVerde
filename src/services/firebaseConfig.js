@@ -8,8 +8,10 @@
 // Si el repo del curso es público, usa variables de entorno (app.config.js + .env)
 // en lugar de dejar los valores escritos aquí directamente.
 
+import { Platform } from "react-native";
 import { initializeApp } from "firebase/app";
 import {
+  getAuth,
   initializeAuth,
   getReactNativePersistence
 } from "firebase/auth";
@@ -29,9 +31,21 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-export const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
-});
+function crearAuth(appInstance) {
+  if (Platform.OS === "web") {
+    return getAuth(appInstance);
+  }
+
+  try {
+    return initializeAuth(appInstance, {
+      persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+    });
+  } catch {
+    return getAuth(appInstance);
+  }
+}
+
+export const auth = crearAuth(app);
 
 export const db = getFirestore(app);
 export const storage = getStorage(app);

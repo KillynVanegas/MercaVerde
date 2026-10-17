@@ -44,12 +44,14 @@ export default function RegistroScreen({ navigation }) {
       <TextInput
         style={styles.input}
         placeholder="Nombre completo"
+        placeholderTextColor="#AAA"
         value={nombre}
         onChangeText={setNombre}
       />
       <TextInput
         style={styles.input}
         placeholder="Correo institucional"
+        placeholderTextColor="#AAA"
         autoCapitalize="none"
         keyboardType="default"
         value={correo}
@@ -58,6 +60,7 @@ export default function RegistroScreen({ navigation }) {
       <TextInput
         style={styles.input}
         placeholder="Contraseña (mínimo 6 caracteres)"
+        placeholderTextColor="#AAA"
         secureTextEntry
         value={contrasena}
         onChangeText={setContrasena}

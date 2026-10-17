@@ -27,6 +27,7 @@ export default function FiltrosCatalogo({ valores, onChange, categorias, visible
       <TextInput
         style={styles.input}
         placeholder="Buscar por nombre"
+        placeholderTextColor="#AAA"
         value={valores.texto}
         onChangeText={(texto) => cambiar("texto", texto)}
       />
@@ -71,6 +72,7 @@ export default function FiltrosCatalogo({ valores, onChange, categorias, visible
         <TextInput
           style={[styles.input, styles.inputMitad]}
           placeholder="Mínimo"
+          placeholderTextColor="#AAA"
           keyboardType="numeric"
           value={valores.precioMin}
           onChangeText={(precioMin) => cambiar("precioMin", precioMin)}
@@ -78,6 +80,7 @@ export default function FiltrosCatalogo({ valores, onChange, categorias, visible
         <TextInput
           style={[styles.input, styles.inputMitad]}
           placeholder="Máximo"
+          placeholderTextColor="#AAA"
           keyboardType="numeric"
           value={valores.precioMax}
           onChangeText={(precioMax) => cambiar("precioMax", precioMax)}

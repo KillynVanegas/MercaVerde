@@ -44,6 +44,7 @@ export default function LoginScreen({ navigation }) {
       <TextInput
         style={styles.input}
         placeholder="Correo institucional"
+        placeholderTextColor="#AAA"
         autoCapitalize="none"
         keyboardType="default"
         value={correo}
@@ -55,6 +56,7 @@ export default function LoginScreen({ navigation }) {
       <TextInput
         style={styles.input}
         placeholder="Contraseña"
+        placeholderTextColor="#AAA"
         secureTextEntry
         value={contrasena}
         onChangeText={(valor) => {
